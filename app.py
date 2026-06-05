@@ -336,13 +336,23 @@ def planilla():
 def activar():
     error = None
     mensaje = None
+    next_route = request.args.get("next") or request.form.get("next") or "planilla"
+
+    # Solo permitimos volver a rutas internas conocidas.
+    allowed_next_routes = {
+        "planilla",
+        "planilla_campeonato",
+        "planillas",
+    }
+    if next_route not in allowed_next_routes:
+        next_route = "planilla"
 
     if request.method == "POST":
         code = request.form.get("codigo", "")
         ok, msg = activate_license_code(code)
 
         if ok:
-            return redirect(url_for("planilla"))
+            return redirect(url_for(next_route))
         else:
             error = msg
 
@@ -350,7 +360,8 @@ def activar():
         "activar.html",
         error=error,
         mensaje=mensaje,
-        license_status=get_license_status_text()
+        license_status=get_license_status_text(),
+        next_route=next_route
     )
 
 # Generación de PDF protegida
@@ -462,7 +473,7 @@ def descargar():
 
     # --------- PÁGINA 1 ---------
     c.setFont("Helvetica-Bold", 16)
-    c.drawCentredString(width / 2, y, "PLANILLA DE FÚTBOL")
+    c.drawCentredString(width / 2, y, "PLANILLA DE FÚTBOL COPA UC")
     y -= 25
 
     # DATOS DEL PARTIDO (2 filas de 3 casillas)
@@ -787,10 +798,504 @@ def descargar():
     c.save()
     buffer.seek(0)
 
+    fecha_descarga = datetime.now().strftime("%d_%m_%Y")
+    nombre_archivo = f"copaUC_{fecha_descarga}.pdf"
+
     return send_file(
         buffer,
         as_attachment=True,
-        download_name="planilla_partido.pdf",
+        download_name=nombre_archivo,
+        mimetype="application/pdf"
+    )
+
+
+
+# --------- PLANILLA CAMPEONATO ---------
+@app.route("/planilla_campeonato", methods=["GET", "POST"])
+def planilla_campeonato():
+    mensaje = None
+
+    if request.method == "POST":
+        datos_planilla = request.form.to_dict()
+        session["ultima_planilla_campeonato"] = datos_planilla
+        mensaje = "Planilla campeonato guardada (solo en memoria por ahora)."
+
+        return render_template(
+            "planilla_campeonato.html",
+            mensaje=mensaje,
+            datos=datos_planilla,
+            license_active=license_is_active(),
+            license_status=get_license_status_text()
+        )
+
+    datos_planilla = session.get("ultima_planilla_campeonato")
+
+    return render_template(
+        "planilla_campeonato.html",
+        datos=datos_planilla,
+        license_active=license_is_active(),
+        license_status=get_license_status_text()
+    )
+
+
+@app.route("/descargar_campeonato", methods=["GET", "POST"])
+def descargar_campeonato():
+    if request.method == "POST":
+        datos_planilla = request.form.to_dict()
+    else:
+        datos_planilla = session.get("ultima_planilla_campeonato") or {}
+
+    if not datos_planilla:
+        return redirect(url_for("planilla_campeonato"))
+
+    if not license_is_active():
+        return redirect(url_for("activar", next="planilla_campeonato"))
+
+    session["ultima_planilla_campeonato"] = datos_planilla
+    return generar_pdf_campeonato(datos_planilla)
+
+
+def generar_pdf_campeonato(datos_planilla):
+    """Genera PDF para la planilla tipo campeonato."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.utils import ImageReader, simpleSplit
+
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    margin = 24
+    x0 = margin
+    x1 = width - margin
+    usable_w = x1 - x0
+    y_top = height - margin
+
+    def val(key):
+        return str(datos_planilla.get(key, "") or "")
+
+    def draw_text(x, y, text, size=6, bold=False, max_width=None):
+        font = "Helvetica-Bold" if bold else "Helvetica"
+        c.setFont(font, size)
+
+        if max_width:
+            lines = simpleSplit(str(text), font, size, max_width)
+            yy = y
+            for line in lines[:2]:
+                c.drawString(x, yy, line)
+                yy -= size + 1
+        else:
+            c.drawString(x, y, str(text))
+
+    def draw_center(x, y, w, text, size=6, bold=False):
+        font = "Helvetica-Bold" if bold else "Helvetica"
+        c.setFont(font, size)
+        c.drawCentredString(x + w / 2, y, str(text))
+
+    def rect(x, y, w, h, fill=0):
+        c.rect(x, y, w, h, stroke=1, fill=fill)
+
+    def label_box(x, y, w, h, label, value="", size_label=5.5, size_value=7):
+        rect(x, y, w, h)
+
+        if label:
+            draw_text(x + 2, y + h - 7, label, size_label, True)
+
+        if value:
+            draw_text(x + 2, y + 3, value, size_value, False, w - 4)
+
+    def draw_bar(x, y, w, h, text):
+        c.setFillGray(0.18)
+        c.rect(x, y, w, h, stroke=1, fill=1)
+
+        c.setFillGray(1)
+        draw_center(x, y + 3, w, text, 6, True)
+
+        c.setFillGray(0)
+
+    def draw_signature_image(data_url, x, y, w, h):
+        if not data_url:
+            return
+
+        try:
+            b64data = data_url.split(",", 1)[1] if "," in data_url else data_url
+            img_bytes = base64.b64decode(b64data)
+            img = ImageReader(BytesIO(img_bytes))
+            img_w, img_h = img.getSize()
+
+            max_w = w - 10
+            max_h = h - 10
+            scale = min(max_w / img_w, max_h / img_h)
+
+            draw_w = img_w * scale
+            draw_h = img_h * scale
+
+            c.drawImage(
+                img,
+                x + (w - draw_w) / 2,
+                y + (h - draw_h) / 2,
+                width=draw_w,
+                height=draw_h,
+                mask="auto"
+            )
+        except Exception:
+            pass
+
+    def draw_small_cell_text(x, y, w, h, text, size=4.8):
+        if text:
+            draw_text(x + 1.4, y + h / 2 - 1.8, text, size, False, w - 2)
+
+    # Marco exterior
+    rect(x0, 38, usable_w, height - 62)
+
+    # =========================
+    # ENCABEZADO
+    # =========================
+    header_h = 70
+
+    logo_path = os.path.join(app.root_path, "static", "ldes.jpg")
+
+    logo_box_x = x0 + 16
+    logo_box_y = y_top - 58
+    logo_box_w = 78
+    logo_box_h = 52
+
+    rect(logo_box_x, logo_box_y, logo_box_w, logo_box_h)
+
+    if os.path.exists(logo_path):
+        try:
+            logo = ImageReader(logo_path)
+
+            # Logo centrado dentro de su caja
+            draw_logo_size = 46
+            c.drawImage(
+                logo,
+                logo_box_x + (logo_box_w - draw_logo_size) / 2,
+                logo_box_y + (logo_box_h - draw_logo_size) / 2,
+                width=draw_logo_size,
+                height=draw_logo_size,
+                mask="auto"
+            )
+        except Exception:
+            pass
+
+    c.setFont("Helvetica-Bold", 15)
+    c.drawCentredString(width / 2, y_top - 38, "PLANILLA DE FUTBOL CAMPEONATO LDES")
+
+    # =========================
+    # DATOS PARTIDO
+    # =========================
+    y = y_top - header_h
+    row_h = 14
+
+    label_box(x0, y, usable_w * 0.22, row_h, "Fecha:", val("fecha"), 5, 6)
+    label_box(x0 + usable_w * 0.22, y, usable_w * 0.18, row_h, "Hora:", val("hora"), 5, 6)
+    label_box(x0 + usable_w * 0.40, y, usable_w * 0.60, row_h, "Estadio:", val("estadio"), 5, 6)
+
+    # =========================
+    # ÁRBITROS Y OFICIALES
+    # =========================
+    y -= 70
+    section_h = 70
+
+    rect(x0, y, usable_w, section_h)
+    draw_bar(x0, y + section_h - 12, usable_w, 12, "ÁRBITROS Y OFICIALES DEL PARTIDO")
+
+    half_w = usable_w / 2
+    off_y = y
+    off_h = section_h - 12
+
+    left_fields = [
+        ("Árbitro:", "arbitro"),
+        ("Árbitro Asistente 1:", "asistente_1"),
+        ("Árbitro Asistente 2:", "asistente_2"),
+        ("Cuarto Árbitro:", "cuarto_arbitro"),
+        ("Asesor de Árbitros:", "asesor_arbitros"),
+    ]
+
+    right_fields = [
+        ("Director de Turno:", "director_turno"),
+        ("Jefe de Seguridad (Club local):", "jefe_seguridad"),
+        ("Encargado Recinto:", "encargado_recinto"),
+        ("Ciudad:", "ciudad"),
+    ]
+
+    line_h = off_h / 5
+
+    for i, (label, key) in enumerate(left_fields):
+        yy = off_y + off_h - (i + 1) * line_h
+        label_box(x0, yy, half_w, line_h, label, val(key), 5, 6)
+
+    for i in range(5):
+        label, key = right_fields[i] if i < len(right_fields) else ("", "")
+        yy = off_y + off_h - (i + 1) * line_h
+        label_box(x0 + half_w, yy, half_w, line_h, label, val(key), 5, 6)
+
+    # =========================
+    # JUGADORES LOCAL / VISITA
+    # =========================
+    y -= 8
+    players_top = y
+
+    team_gap = 10
+    team_w = (usable_w - team_gap) / 2
+
+    def draw_team_players(x, y_top_team, prefix, title):
+        """
+        Dibuja equipo completo:
+        - Nombre equipo
+        - Titulares
+        - Suplentes
+        - Sustituciones con 6 filas
+
+        Devuelve el punto inferior real usado por la tabla.
+        """
+
+        row_h = 11
+
+        # Alto real aproximado considerando 6 sustituciones
+        table_h = 352
+        bottom = y_top_team - table_h
+
+        rect(x, bottom, team_w, table_h)
+
+        current_y = y_top_team - 14
+        label_box(x, current_y, team_w, 14, title + ":", val(f"equipo_{prefix}"), 5, 6.2)
+
+        # Barra jugadores
+        current_y -= 12
+        draw_bar(x, current_y, team_w, 12, "Jugadores")
+
+        cols = [
+            ("N°", 0.09),
+            ("Nombre", 0.30),
+            ("Apellidos", 0.31),
+            ("G", 0.055),
+            ("A/C", 0.06),
+            ("TA", 0.06),
+            ("TR", 0.06),
+        ]
+
+        col_widths = [team_w * frac for _, frac in cols]
+        diff = team_w - sum(col_widths)
+        col_widths[-1] += diff
+
+        def draw_header_row(y_row):
+            xx = x
+            for (label, _), cw in zip(cols, col_widths):
+                rect(xx, y_row, cw, 12)
+                draw_center(xx, y_row + 3.2, cw, label, 4.8, True)
+                xx += cw
+
+        draw_header_row(current_y - 12)
+        current_y -= 24
+
+        # Titulares
+        for i in range(1, 12):
+            xx = x
+            keys = [
+                f"{prefix}_titular_num_{i}",
+                f"{prefix}_titular_nombre_{i}",
+                f"{prefix}_titular_apellido_{i}",
+                f"{prefix}_titular_g_{i}",
+                f"{prefix}_titular_ac_{i}",
+                f"{prefix}_titular_ta_{i}",
+                f"{prefix}_titular_tr_{i}",
+            ]
+
+            for key, cw in zip(keys, col_widths):
+                rect(xx, current_y, cw, row_h)
+                draw_small_cell_text(xx, current_y, cw, row_h, val(key))
+                xx += cw
+
+            current_y -= row_h
+
+        # Suplentes
+        draw_bar(x, current_y, team_w, 12, "Suplentes")
+        current_y -= 12
+
+        for i in range(1, 8):
+            xx = x
+            keys = [
+                f"{prefix}_suplente_num_{i}",
+                f"{prefix}_suplente_nombre_{i}",
+                f"{prefix}_suplente_apellido_{i}",
+                f"{prefix}_suplente_g_{i}",
+                f"{prefix}_suplente_ac_{i}",
+                f"{prefix}_suplente_ta_{i}",
+                f"{prefix}_suplente_tr_{i}",
+            ]
+
+            for key, cw in zip(keys, col_widths):
+                rect(xx, current_y, cw, row_h)
+                draw_small_cell_text(xx, current_y, cw, row_h, val(key))
+                xx += cw
+
+            current_y -= row_h
+
+        # Sustituciones
+        draw_bar(x, current_y, team_w, 12, "SUSTITUCIONES")
+        current_y -= 12
+
+        sub_cols = [
+            team_w * 0.38,
+            team_w * 0.38,
+            team_w * 0.24,
+        ]
+
+        sub_labels = ["Sale", "Entra", "Min."]
+
+        xx = x
+        for label, cw in zip(sub_labels, sub_cols):
+            rect(xx, current_y, cw, row_h)
+            draw_center(xx, current_y + 3.2, cw, label, 4.8, True)
+            xx += cw
+
+        current_y -= row_h
+
+        for i in range(1, 7):
+            xx = x
+            keys = [
+                f"{prefix}_sub_sale_{i}",
+                f"{prefix}_sub_entra_{i}",
+                f"{prefix}_sub_min_{i}",
+            ]
+
+            for key, cw in zip(keys, sub_cols):
+                rect(xx, current_y, cw, row_h)
+                draw_small_cell_text(xx, current_y, cw, row_h, val(key))
+                xx += cw
+
+            current_y -= row_h
+
+        # Retornamos el punto real más bajo usado, no el antiguo bottom fijo.
+        return min(bottom, current_y)
+
+    local_bottom = draw_team_players(x0, players_top, "local", "LOCAL")
+    visita_bottom = draw_team_players(x0 + team_w + team_gap, players_top, "visita", "VISITA")
+
+    y = min(local_bottom, visita_bottom) - 8
+
+    # =========================
+    # LEYENDA
+    # =========================
+    draw_center(
+        x0,
+        y,
+        usable_w,
+        "T: Titular | S: Suplente | A: Arquero | C: Capitán | J: Juvenil | E: Extranjero",
+        5.6,
+        False
+    )
+
+    y -= 28
+
+    # =========================
+    # FIRMAS DT
+    # =========================
+    sig_w = usable_w / 2 - 26
+    sig_h = 32
+    sig_y = y
+
+    line_y = sig_y + sig_h - 6
+
+    c.line(x0 + 20, line_y, x0 + 20 + sig_w, line_y)
+    c.line(x0 + usable_w / 2 + 20, line_y, x0 + usable_w / 2 + 20 + sig_w, line_y)
+
+    draw_signature_image(val("firma_dt_local_img"), x0 + 20, sig_y + 8, sig_w, 24)
+    draw_signature_image(val("firma_dt_visita_img"), x0 + usable_w / 2 + 20, sig_y + 8, sig_w, 24)
+
+    draw_center(x0 + 20, sig_y + 4, sig_w, "Firma - Director Técnico", 6)
+    draw_center(x0 + usable_w / 2 + 20, sig_y + 4, sig_w, "Firma - Director Técnico", 6)
+
+    y -= 26
+
+    # =========================
+    # NOTA
+    # =========================
+    note_h = 20
+    rect(x0, y, usable_w, note_h)
+
+    draw_text(
+        x0 + 3,
+        y + 11,
+        "NOTA: El Director Técnico y el Director de Turno declaran se hacen responsables que la información entregada es fidedigna y se ajusta a las Bases del Campeonato.",
+        5.2,
+        False,
+        usable_w - 6
+    )
+
+    draw_center(
+        x0,
+        y + 2,
+        usable_w,
+        "Esta planilla deberá ser completada con letra imprenta legible.",
+        5.2,
+        True
+    )
+
+    # =========================
+    # CUERPO TÉCNICO
+    # =========================
+    y -= 90
+
+    ct_h = 86
+    ct_w = (usable_w - team_gap) / 2
+
+    def draw_ct(x, y, prefix, title):
+        rect(x, y, ct_w, ct_h)
+        draw_bar(x, y + ct_h - 13, ct_w, 13, title)
+
+        row_h_ct = (ct_h - 13) / 5
+
+        fields = [
+            ("Director técnico", f"ct_{prefix}_dt"),
+            ("Entrenador asistente", f"ct_{prefix}_asistente"),
+            ("Preparador físico", f"ct_{prefix}_pf"),
+            ("Otro", f"ct_{prefix}_otro1"),
+            ("Otro", f"ct_{prefix}_otro2"),
+        ]
+
+        for i, (label, key) in enumerate(fields):
+            yy = y + ct_h - 13 - (i + 1) * row_h_ct
+
+            label_box(x, yy, ct_w * 0.48, row_h_ct, "", val(key), 4.5, 5.2)
+            label_box(x + ct_w * 0.48, yy, ct_w * 0.52, row_h_ct, label, "", 4.8, 5.2)
+
+    draw_ct(x0, y, "local", "CUERPO TÉCNICO LOCAL")
+    draw_ct(x0 + ct_w + team_gap, y, "visita", "CUERPO TÉCNICO VISITA")
+
+    # =========================
+    # RESULTADO
+    # =========================
+    y -= 16
+
+    result_h = 14
+
+    label_box(x0, y, usable_w * 0.18, result_h, "RESULTADO", val("resultado_local"), 5, 6)
+    label_box(x0 + usable_w * 0.18, y, usable_w * 0.32, result_h, "LOCAL", val("equipo_local"), 5, 6)
+    label_box(x0 + usable_w * 0.50, y, usable_w * 0.18, result_h, "RESULTADO", val("resultado_visita"), 5, 6)
+    label_box(x0 + usable_w * 0.68, y, usable_w * 0.32, result_h, "VISITA", val("equipo_visita"), 5, 6)
+
+    # =========================
+    # OBSERVACIONES
+    # =========================
+    y -= 55
+
+    obs_h = 50
+    label_box(x0, y, usable_w, obs_h, "OBSERVACIONES:", val("observaciones"), 5, 6)
+
+    # Cerrar PDF
+    c.save()
+    buffer.seek(0)
+
+    fecha_descarga = datetime.now().strftime("%d_%m_%Y")
+    nombre_archivo = f"FUTBOL_LDES_{fecha_descarga}.pdf"
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=nombre_archivo,
         mimetype="application/pdf"
     )
 

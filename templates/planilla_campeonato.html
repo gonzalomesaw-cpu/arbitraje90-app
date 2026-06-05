@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Planilla Campeonato Oficial</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+<div class="container official-sheet">
+
+    <div class="top-bar">
+        <div>
+            <a href="{{ url_for('planillas') }}">&larr; Volver a planillas</a>
+        </div>
+        <div>
+            {{ license_status }}
+            {% if not license_active %}
+                · <a href="{{ url_for('activar', next='planilla_campeonato') }}">Activar licencia</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="header">
+        <div class="header-logo">
+            <img src="{{ url_for('static', filename='ldes.jpg') }}" alt="Logo">
+        </div>
+        <div class="header-title">
+            <h1>PLANILLA DE FUTBOL UNIVERSITARIO LDES</h1>
+        </div>
+    </div>
+
+    {% if mensaje %}
+        <div class="mensaje">{{ mensaje }}</div>
+    {% endif %}
+
+    <form method="POST" id="form-campeonato" onsubmit="prepareCampeonatoSignatures()">
+
+        <!-- DATOS DEL PARTIDO -->
+        <fieldset class="official-section">
+            <legend>Datos del partido</legend>
+            <div class="grid-3">
+                <div>
+                    <label>Fecha</label>
+                    <input type="text" name="fecha" value="{{ datos.fecha if datos else '' }}">
+                </div>
+                <div>
+                    <label>Hora</label>
+                    <input type="text" name="hora" value="{{ datos.hora if datos else '' }}">
+                </div>
+                <div>
+                    <label>Estadio</label>
+                    <input type="text" name="estadio" value="{{ datos.estadio if datos else '' }}">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- ÁRBITROS Y OFICIALES -->
+        <fieldset class="official-section">
+            <legend>Árbitros y oficiales del partido</legend>
+            <div class="grid-2">
+                <div>
+                    <label>Árbitro</label>
+                    <input type="text" name="arbitro" value="{{ datos.arbitro if datos else '' }}">
+
+                    <label>Árbitro Asistente 1</label>
+                    <input type="text" name="asistente_1" value="{{ datos.asistente_1 if datos else '' }}">
+
+                    <label>Árbitro Asistente 2</label>
+                    <input type="text" name="asistente_2" value="{{ datos.asistente_2 if datos else '' }}">
+
+                    <label>Cuarto Árbitro</label>
+                    <input type="text" name="cuarto_arbitro" value="{{ datos.cuarto_arbitro if datos else '' }}">
+
+                    <label>Asesor de Árbitros</label>
+                    <input type="text" name="asesor_arbitros" value="{{ datos.asesor_arbitros if datos else '' }}">
+                </div>
+
+                <div>
+                    <label>Director de Turno</label>
+                    <input type="text" name="director_turno" value="{{ datos.director_turno if datos else '' }}">
+
+                    <label>Jefe de Seguridad (Club local)</label>
+                    <input type="text" name="jefe_seguridad" value="{{ datos.jefe_seguridad if datos else '' }}">
+
+                    <label>Encargado Recinto</label>
+                    <input type="text" name="encargado_recinto" value="{{ datos.encargado_recinto if datos else '' }}">
+
+                    <label>Ciudad</label>
+                    <input type="text" name="ciudad" value="{{ datos.ciudad if datos else '' }}">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- LOCAL / VISITA -->
+        <fieldset class="official-section">
+            <legend>Local y visita</legend>
+
+            <div class="grid-2">
+                <!-- LOCAL -->
+                <div>
+                    <div class="official-team-title">Local</div>
+                    <label>Nombre equipo local</label>
+                    <input type="text" name="equipo_local" value="{{ datos.equipo_local if datos else '' }}">
+
+                    <div class="hint">Jugadores titulares</div>
+                    <div class="official-table-wrap">
+                        <table class="official-players-table">
+                            <thead>
+                                <tr>
+                                    <th class="official-col-num">N°</th>
+                                    <th>Nombre</th>
+                                    <th>Apellidos</th>
+                                    <th class="official-col-small">G</th>
+                                    <th class="official-col-small">A/C</th>
+                                    <th class="official-col-small">TA</th>
+                                    <th class="official-col-small">TR</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in range(1, 12) %}
+                                <tr>
+                                    <td><input type="text" name="local_titular_num_{{ i }}" value="{{ datos['local_titular_num_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_titular_nombre_{{ i }}" value="{{ datos['local_titular_nombre_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_titular_apellido_{{ i }}" value="{{ datos['local_titular_apellido_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_titular_g_{{ i }}" value="{{ datos['local_titular_g_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_titular_ac_{{ i }}" value="{{ datos['local_titular_ac_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_titular_ta_{{ i }}" value="{{ datos['local_titular_ta_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_titular_tr_{{ i }}" value="{{ datos['local_titular_tr_' ~ i] if datos else '' }}"></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="hint">Jugadores suplentes</div>
+                    <div class="official-table-wrap">
+                        <table class="official-players-table">
+                            <thead>
+                                <tr>
+                                    <th class="official-col-num">N°</th>
+                                    <th>Nombre</th>
+                                    <th>Apellidos</th>
+                                    <th class="official-col-small">G</th>
+                                    <th class="official-col-small">A/C</th>
+                                    <th class="official-col-small">TA</th>
+                                    <th class="official-col-small">TR</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in range(1, 8) %}
+                                <tr>
+                                    <td><input type="text" name="local_suplente_num_{{ i }}" value="{{ datos['local_suplente_num_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_suplente_nombre_{{ i }}" value="{{ datos['local_suplente_nombre_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_suplente_apellido_{{ i }}" value="{{ datos['local_suplente_apellido_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_suplente_g_{{ i }}" value="{{ datos['local_suplente_g_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_suplente_ac_{{ i }}" value="{{ datos['local_suplente_ac_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_suplente_ta_{{ i }}" value="{{ datos['local_suplente_ta_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_suplente_tr_{{ i }}" value="{{ datos['local_suplente_tr_' ~ i] if datos else '' }}"></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="hint">Sustituciones local</div>
+                    <div class="official-table-wrap">
+                        <table class="official-sub-table">
+                            <thead>
+                                <tr>
+                                    <th>Sale</th>
+                                    <th>Entra</th>
+                                    <th class="official-col-small">Min.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in range(1, 7) %}
+                                <tr>
+                                    <td><input type="text" name="local_sub_sale_{{ i }}" value="{{ datos['local_sub_sale_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_sub_entra_{{ i }}" value="{{ datos['local_sub_entra_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="local_sub_min_{{ i }}" value="{{ datos['local_sub_min_' ~ i] if datos else '' }}"></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- VISITA -->
+                <div>
+                    <div class="official-team-title">Visita</div>
+                    <label>Nombre equipo visita</label>
+                    <input type="text" name="equipo_visita" value="{{ datos.equipo_visita if datos else '' }}">
+
+                    <div class="hint">Jugadores titulares</div>
+                    <div class="official-table-wrap">
+                        <table class="official-players-table">
+                            <thead>
+                                <tr>
+                                    <th class="official-col-num">N°</th>
+                                    <th>Nombre</th>
+                                    <th>Apellidos</th>
+                                    <th class="official-col-small">G</th>
+                                    <th class="official-col-small">A/C</th>
+                                    <th class="official-col-small">TA</th>
+                                    <th class="official-col-small">TR</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in range(1, 12) %}
+                                <tr>
+                                    <td><input type="text" name="visita_titular_num_{{ i }}" value="{{ datos['visita_titular_num_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_titular_nombre_{{ i }}" value="{{ datos['visita_titular_nombre_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_titular_apellido_{{ i }}" value="{{ datos['visita_titular_apellido_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_titular_g_{{ i }}" value="{{ datos['visita_titular_g_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_titular_ac_{{ i }}" value="{{ datos['visita_titular_ac_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_titular_ta_{{ i }}" value="{{ datos['visita_titular_ta_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_titular_tr_{{ i }}" value="{{ datos['visita_titular_tr_' ~ i] if datos else '' }}"></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="hint">Jugadores suplentes</div>
+                    <div class="official-table-wrap">
+                        <table class="official-players-table">
+                            <thead>
+                                <tr>
+                                    <th class="official-col-num">N°</th>
+                                    <th>Nombre</th>
+                                    <th>Apellidos</th>
+                                    <th class="official-col-small">G</th>
+                                    <th class="official-col-small">A/C</th>
+                                    <th class="official-col-small">TA</th>
+                                    <th class="official-col-small">TR</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in range(1, 8) %}
+                                <tr>
+                                    <td><input type="text" name="visita_suplente_num_{{ i }}" value="{{ datos['visita_suplente_num_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_suplente_nombre_{{ i }}" value="{{ datos['visita_suplente_nombre_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_suplente_apellido_{{ i }}" value="{{ datos['visita_suplente_apellido_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_suplente_g_{{ i }}" value="{{ datos['visita_suplente_g_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_suplente_ac_{{ i }}" value="{{ datos['visita_suplente_ac_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_suplente_ta_{{ i }}" value="{{ datos['visita_suplente_ta_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_suplente_tr_{{ i }}" value="{{ datos['visita_suplente_tr_' ~ i] if datos else '' }}"></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="hint">Sustituciones visita</div>
+                    <div class="official-table-wrap">
+                        <table class="official-sub-table">
+                            <thead>
+                                <tr>
+                                    <th>Sale</th>
+                                    <th>Entra</th>
+                                    <th class="official-col-small">Min.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in range(1, 7) %}
+                                <tr>
+                                    <td><input type="text" name="visita_sub_sale_{{ i }}" value="{{ datos['visita_sub_sale_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_sub_entra_{{ i }}" value="{{ datos['visita_sub_entra_' ~ i] if datos else '' }}"></td>
+                                    <td><input type="text" name="visita_sub_min_{{ i }}" value="{{ datos['visita_sub_min_' ~ i] if datos else '' }}"></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="official-note">
+                T: Titular | S: Suplente | A: Arquero | C: Capitán | J: Juvenil | E: Extranjero
+            </div>
+        </fieldset>
+
+        <!-- FIRMAS -->
+        <fieldset class="official-section">
+            <legend>Firmas de directores técnicos</legend>
+
+            <div class="official-signature-grid">
+                <div class="signature-block">
+                    <label>Nombre director técnico local</label>
+                    <input type="text" name="firma_dt_local_nombre" value="{{ datos.firma_dt_local_nombre if datos else '' }}">
+
+                    <div class="signature-pad official-signature-pad">
+                        <canvas id="canvas_firma_dt_local"></canvas>
+                        <div class="signature-actions">
+                            <button type="button" class="btn-secondary" onclick="limpiarFirmaCampeonato('canvas_firma_dt_local', 'firma_dt_local_img')">
+                                Borrar firma
+                            </button>
+                        </div>
+                    </div>
+                    <input type="hidden" name="firma_dt_local_img" id="firma_dt_local_img" value="{{ datos.firma_dt_local_img if datos else '' }}">
+                </div>
+
+                <div class="signature-block">
+                    <label>Nombre director técnico visita</label>
+                    <input type="text" name="firma_dt_visita_nombre" value="{{ datos.firma_dt_visita_nombre if datos else '' }}">
+
+                    <div class="signature-pad official-signature-pad">
+                        <canvas id="canvas_firma_dt_visita"></canvas>
+                        <div class="signature-actions">
+                            <button type="button" class="btn-secondary" onclick="limpiarFirmaCampeonato('canvas_firma_dt_visita', 'firma_dt_visita_img')">
+                                Borrar firma
+                            </button>
+                        </div>
+                    </div>
+                    <input type="hidden" name="firma_dt_visita_img" id="firma_dt_visita_img" value="{{ datos.firma_dt_visita_img if datos else '' }}">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- CUERPO TÉCNICO -->
+        <fieldset class="official-section">
+            <legend>Cuerpo técnico</legend>
+            <div class="grid-2">
+                <div>
+                    <div class="official-team-title">Cuerpo técnico local</div>
+                    <table class="official-ct-table">
+                        <tbody>
+                            <tr><th>Cargo</th><th>Nombre</th></tr>
+                            <tr><td>Director técnico</td><td><input type="text" name="ct_local_dt" value="{{ datos.ct_local_dt if datos else '' }}"></td></tr>
+                            <tr><td>Entrenador asistente</td><td><input type="text" name="ct_local_asistente" value="{{ datos.ct_local_asistente if datos else '' }}"></td></tr>
+                            <tr><td>Preparador físico</td><td><input type="text" name="ct_local_pf" value="{{ datos.ct_local_pf if datos else '' }}"></td></tr>
+                            <tr><td>Otro</td><td><input type="text" name="ct_local_otro1" value="{{ datos.ct_local_otro1 if datos else '' }}"></td></tr>
+                            <tr><td>Otro</td><td><input type="text" name="ct_local_otro2" value="{{ datos.ct_local_otro2 if datos else '' }}"></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div>
+                    <div class="official-team-title">Cuerpo técnico visita</div>
+                    <table class="official-ct-table">
+                        <tbody>
+                            <tr><th>Cargo</th><th>Nombre</th></tr>
+                            <tr><td>Director técnico</td><td><input type="text" name="ct_visita_dt" value="{{ datos.ct_visita_dt if datos else '' }}"></td></tr>
+                            <tr><td>Entrenador asistente</td><td><input type="text" name="ct_visita_asistente" value="{{ datos.ct_visita_asistente if datos else '' }}"></td></tr>
+                            <tr><td>Preparador físico</td><td><input type="text" name="ct_visita_pf" value="{{ datos.ct_visita_pf if datos else '' }}"></td></tr>
+                            <tr><td>Otro</td><td><input type="text" name="ct_visita_otro1" value="{{ datos.ct_visita_otro1 if datos else '' }}"></td></tr>
+                            <tr><td>Otro</td><td><input type="text" name="ct_visita_otro2" value="{{ datos.ct_visita_otro2 if datos else '' }}"></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- RESULTADO -->
+        <fieldset class="official-section">
+            <legend>Resultado</legend>
+            <div class="grid-2">
+                <div>
+                    <label>Resultado local</label>
+                    <input type="text" name="resultado_local" value="{{ datos.resultado_local if datos else '' }}">
+                </div>
+                <div>
+                    <label>Resultado visita</label>
+                    <input type="text" name="resultado_visita" value="{{ datos.resultado_visita if datos else '' }}">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- OBSERVACIONES -->
+        <fieldset class="official-section">
+            <legend>Observaciones</legend>
+            <textarea name="observaciones" rows="6">{{ datos.observaciones if datos else '' }}</textarea>
+        </fieldset>
+
+        <div class="buttons">
+            <button type="submit" class="btn-primary">
+                Guardar planilla
+            </button>
+
+            {% if license_active %}
+                <button type="submit"
+                        class="btn-secondary"
+                        formaction="{{ url_for('descargar_campeonato') }}">
+                    Descargar planilla en PDF
+                </button>
+            {% else %}
+                <a href="{{ url_for('activar', next='planilla_campeonato') }}" class="btn-secondary">
+                    Activar licencia para descargar PDF
+                </a>
+            {% endif %}
+        </div>
+
+    </form>
+</div>
+
+<script>
+function initFirmaCampeonato(canvasId, inputId) {
+    const canvas = document.getElementById(canvasId);
+    const hidden = document.getElementById(inputId);
+    if (!canvas || !hidden || !canvas.getContext) return;
+
+    const ctx = canvas.getContext("2d");
+
+    function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const ratio = window.devicePixelRatio || 1;
+
+        canvas.width = rect.width * ratio;
+        canvas.height = 105 * ratio;
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(ratio, ratio);
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.strokeStyle = "#111";
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, rect.width, 105);
+
+        if (hidden.value) {
+            const img = new Image();
+            img.onload = function () {
+                ctx.drawImage(img, 0, 0, rect.width, 105);
+            };
+            img.src = hidden.value;
+        }
+    }
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    let drawing = false;
+
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches ? e.touches[0] : e;
+        return {
+            x: touch.clientX - rect.left,
+            y: touch.clientY - rect.top
+        };
+    }
+
+    function start(e) {
+        drawing = true;
+        const p = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        e.preventDefault();
+    }
+
+    function move(e) {
+        if (!drawing) return;
+        const p = getPos(e);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        hidden.value = canvas.toDataURL("image/png");
+        e.preventDefault();
+    }
+
+    function end(e) {
+        if (!drawing) return;
+        drawing = false;
+        hidden.value = canvas.toDataURL("image/png");
+        e && e.preventDefault();
+    }
+
+    canvas.addEventListener("mousedown", start);
+    canvas.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", end);
+
+    canvas.addEventListener("touchstart", start, { passive: false });
+    canvas.addEventListener("touchmove", move, { passive: false });
+    canvas.addEventListener("touchend", end, { passive: false });
+}
+
+function limpiarFirmaCampeonato(canvasId, inputId) {
+    const canvas = document.getElementById(canvasId);
+    const hidden = document.getElementById(inputId);
+    if (!canvas || !canvas.getContext) return;
+
+    const ctx = canvas.getContext("2d");
+    const rect = canvas.getBoundingClientRect();
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, rect.width, 105);
+
+    if (hidden) hidden.value = "";
+}
+
+function prepareCampeonatoSignatures() {
+    const pairs = [
+        ["canvas_firma_dt_local", "firma_dt_local_img"],
+        ["canvas_firma_dt_visita", "firma_dt_visita_img"]
+    ];
+
+    pairs.forEach(function(pair) {
+        const canvas = document.getElementById(pair[0]);
+        const hidden = document.getElementById(pair[1]);
+        if (canvas && hidden && !hidden.value) {
+            hidden.value = canvas.toDataURL("image/png");
+        }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    initFirmaCampeonato("canvas_firma_dt_local", "firma_dt_local_img");
+    initFirmaCampeonato("canvas_firma_dt_visita", "firma_dt_visita_img");
+});
+</script>
+
+</body>
+</html>
