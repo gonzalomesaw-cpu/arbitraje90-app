@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Contacto - Arbitraje 90+</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+
+<body class="home">
+<div class="home-shell">
+
+    <header class="home-header">
+        <div class="home-brand">
+            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Logo">
+            <span>Arbitraje 90+</span>
+        </div>
+
+        <nav class="home-nav">
+            <a href="{{ url_for('inicio') }}">Inicio</a>
+            <a href="#">Nosotros</a>
+            <a href="#">Servicio arbitral</a>
+            <a href="{{ url_for('contacto') }}">Contacto</a>
+        </nav>
+    </header>
+
+    <main class="home-main">
+        <div class="home-main-inner">
+
+            <section class="contact-hero">
+                <h1>Contacto</h1>
+                <p>
+                    Escríbenos para consultas, acceso a planillas, códigos de activación,
+                    servicios arbitrales o futuras integraciones para campeonatos.
+                </p>
+            </section>
+
+            <section class="contact-grid">
+
+                <!-- CORREO -->
+                <a class="contact-card" href="mailto:contacto@arbitraje90.cl">
+                    <div class="contact-icon">
+                        <img src="{{ url_for('static', filename='contact_mail.png') }}" alt="Correo">
+                    </div>
+                    <div>
+                        <h2>Correo</h2>
+                        <p>contacto@arbitraje90.cl</p>
+                        <span>Enviar correo</span>
+                    </div>
+                </a>
+
+                <!-- INSTAGRAM -->
+                <a class="contact-card" href="https://www.instagram.com/p/DX3ASj_AKBr/?igsh=dTF6c2praTFkaGxr" target="_blank" rel="noopener noreferrer">
+                    <div class="contact-icon">
+                        <img src="{{ url_for('static', filename='contact_instagram.png') }}" alt="Instagram">
+                    </div>
+                    <div>
+                        <h2>Instagram</h2>
+                        <p>@arbitros90plus</p>
+                        <span>Abrir Instagram</span>
+                    </div>
+                </a>
+
+                <!-- WHATSAPP -->
+                <a class="contact-card" href="https://wa.me/56934962965" target="_blank" rel="noopener noreferrer">
+                    <div class="contact-icon">
+                        <img src="{{ url_for('static', filename='contact_whatsapp.png') }}" alt="WhatsApp">
+                    </div>
+                    <div>
+                        <h2>WhatsApp</h2>
+                        <p>+56 9 3496 2965</p>
+                        <span>Enviar mensaje</span>
+                    </div>
+                </a>
+
+            </section>
+
+            <section class="contact-note">
+                <h2>Soporte para códigos de activación</h2>
+                <p>
+                    Si compraste una licencia de 24 horas o 1 mes y tienes problemas para activar tu código,
+                    escríbenos por WhatsApp o correo indicando tu código y el tipo de planilla que quieres descargar.
+                </p>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="home-footer">
+        Arbitraje 90+ · Planillas digitales para partidos y campeonatos
+    </footer>
+
+</div>
+</body>
+</html>

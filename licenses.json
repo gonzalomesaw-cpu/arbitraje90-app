@@ -1,0 +1,20 @@
+{
+    "ADMIN-ILIMITADO-2026": {
+        "type": "admin",
+        "used": false,
+        "activated_at": null,
+        "expires_at": null
+    },
+    "PLAN24-TEST-001": {
+        "type": "24h",
+        "used": true,
+        "activated_at": "2026-06-04T22:17:35.575498",
+        "expires_at": "2026-06-05T22:17:35.575501"
+    },
+    "PLAN30-TEST-001": {
+        "type": "30d",
+        "used": false,
+        "activated_at": null,
+        "expires_at": null
+    }
+}

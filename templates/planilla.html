@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Planilla de Partido</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+
+<body>
+<div class="container">
+
+    <div class="top-bar">
+        <div>
+            <a href="{{ url_for('planillas') }}">&larr; Volver a planillas</a>
+        </div>
+        <div>
+            {{ license_status }}
+            {% if not license_active %}
+                · <a href="{{ url_for('activar') }}">Activar licencia</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="header">
+        <div class="header-logo">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+        </div>
+        <div class="header-title">
+            <h1>PLANILLA DE FÚTBOL</h1>
+        </div>
+    </div>
+
+    {% if mensaje %}
+        <div class="mensaje">
+            {{ mensaje }}
+        </div>
+    {% endif %}
+
+    <form method="POST" onsubmit="preparePlayersData()">
+
+        <!-- DATOS DEL PARTIDO -->
+        <fieldset>
+            <legend>Datos del partido</legend>
+
+            <div class="grid-3">
+                <div>
+                    <label>Cancha</label>
+                    <input type="text" name="cancha" value="{{ datos.cancha if datos else '' }}">
+                </div>
+                <div>
+                    <label>División</label>
+                    <input type="text" name="division" value="{{ datos.division if datos else '' }}">
+                </div>
+                <div>
+                    <label>Hora</label>
+                    <input type="time" name="hora" value="{{ datos.hora if datos else '' }}">
+                </div>
+            </div>
+
+            <div class="grid-3" style="margin-top:10px;">
+                <div>
+                    <label>Día</label>
+                    <input type="number" name="dia" min="1" max="31" value="{{ datos.dia if datos else '' }}">
+                </div>
+                <div>
+                    <label>Mes</label>
+                    <input type="number" name="mes" min="1" max="12" value="{{ datos.mes if datos else '' }}">
+                </div>
+                <div>
+                    <label>Año</label>
+                    <input type="number" name="anio" value="{{ datos.anio if datos else '' }}">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- ESTABLECIMIENTOS / EQUIPOS -->
+        <fieldset>
+            <legend>Establecimientos / Equipos</legend>
+
+            <div class="grid-2">
+                <div>
+                    <div class="section-title">Equipo A</div>
+
+                    <label>Establecimiento</label>
+                    <input type="text" name="equipo_a_establecimiento" value="{{ datos.equipo_a_establecimiento if datos else '' }}">
+
+                    <label>Categoría</label>
+                    <input type="text" name="equipo_a_categoria" value="{{ datos.equipo_a_categoria if datos else '' }}">
+
+                    <label>Entrenador (nombre y firma)</label>
+                    <input type="text" name="equipo_a_entrenador" value="{{ datos.equipo_a_entrenador if datos else '' }}">
+
+                    <label>Capitán (nombre y firma)</label>
+                    <input type="text" name="equipo_a_capitan" value="{{ datos.equipo_a_capitan if datos else '' }}">
+                </div>
+
+                <div>
+                    <div class="section-title">Equipo B</div>
+
+                    <label>Establecimiento</label>
+                    <input type="text" name="equipo_b_establecimiento" value="{{ datos.equipo_b_establecimiento if datos else '' }}">
+
+                    <label>Categoría</label>
+                    <input type="text" name="equipo_b_categoria" value="{{ datos.equipo_b_categoria if datos else '' }}">
+
+                    <label>Entrenador (nombre y firma)</label>
+                    <input type="text" name="equipo_b_entrenador" value="{{ datos.equipo_b_entrenador if datos else '' }}">
+
+                    <label>Capitán (nombre y firma)</label>
+                    <input type="text" name="equipo_b_capitan" value="{{ datos.equipo_b_capitan if datos else '' }}">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- JUGADORES Y SUPLENTES -->
+        <fieldset>
+            <legend>Jugadores y suplentes</legend>
+
+            <div class="grid-2">
+                <!-- EQUIPO A -->
+                <div>
+                    <div class="section-title">EQUIPO A</div>
+
+                    <div class="hint">Titulares</div>
+                    <table class="players-table">
+                        <thead>
+                            <tr>
+                                <th class="col-num">N°</th>
+                                <th>Nombre</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in range(11) %}
+                            <tr data-group="equipo_a_jugadores">
+                                <td><input type="text" class="jug-num" maxlength="3"></td>
+                                <td><input type="text" class="jug-nombre"></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="hint">Suplentes</div>
+                    <table class="players-table">
+                        <thead>
+                            <tr>
+                                <th class="col-num">N°</th>
+                                <th>Nombre</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in range(11) %}
+                            <tr data-group="equipo_a_suplentes">
+                                <td><input type="text" class="jug-num" maxlength="3"></td>
+                                <td><input type="text" class="jug-nombre"></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <textarea id="equipo_a_jugadores_hidden"
+                              name="equipo_a_jugadores"
+                              style="display:none;">{{ datos.equipo_a_jugadores if datos else '' }}</textarea>
+
+                    <textarea id="equipo_a_suplentes_hidden"
+                              name="equipo_a_suplentes"
+                              style="display:none;">{{ datos.equipo_a_suplentes if datos else '' }}</textarea>
+                </div>
+
+                <!-- EQUIPO B -->
+                <div>
+                    <div class="section-title">EQUIPO B</div>
+
+                    <div class="hint">Titulares</div>
+                    <table class="players-table">
+                        <thead>
+                            <tr>
+                                <th class="col-num">N°</th>
+                                <th>Nombre</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in range(11) %}
+                            <tr data-group="equipo_b_jugadores">
+                                <td><input type="text" class="jug-num" maxlength="3"></td>
+                                <td><input type="text" class="jug-nombre"></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="hint">Suplentes</div>
+                    <table class="players-table">
+                        <thead>
+                            <tr>
+                                <th class="col-num">N°</th>
+                                <th>Nombre</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in range(11) %}
+                            <tr data-group="equipo_b_suplentes">
+                                <td><input type="text" class="jug-num" maxlength="3"></td>
+                                <td><input type="text" class="jug-nombre"></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <textarea id="equipo_b_jugadores_hidden"
+                              name="equipo_b_jugadores"
+                              style="display:none;">{{ datos.equipo_b_jugadores if datos else '' }}</textarea>
+
+                    <textarea id="equipo_b_suplentes_hidden"
+                              name="equipo_b_suplentes"
+                              style="display:none;">{{ datos.equipo_b_suplentes if datos else '' }}</textarea>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- GOLES Y RESULTADO -->
+        <fieldset>
+            <legend>Goles y resultado</legend>
+
+            <label>Goles 1º tiempo (detalle)</label>
+            <textarea name="goles_primer_tiempo" rows="3">{{ datos.goles_primer_tiempo if datos else '' }}</textarea>
+
+            <label>Goles 2º tiempo (detalle)</label>
+            <textarea name="goles_segundo_tiempo" rows="3">{{ datos.goles_segundo_tiempo if datos else '' }}</textarea>
+
+            <div class="grid-2" style="margin-top:10px;">
+                <div>
+                    <div class="section-title">Resultado equipo A</div>
+                    <label>Nombre equipo</label>
+                    <input type="text" name="resultado_equipo_a_nombre" value="{{ datos.resultado_equipo_a_nombre if datos else '' }}">
+
+                    <label>Goles</label>
+                    <input type="number" name="resultado_equipo_a_goles" value="{{ datos.resultado_equipo_a_goles if datos else '' }}">
+                </div>
+
+                <div>
+                    <div class="section-title">Resultado equipo B</div>
+                    <label>Nombre equipo</label>
+                    <input type="text" name="resultado_equipo_b_nombre" value="{{ datos.resultado_equipo_b_nombre if datos else '' }}">
+
+                    <label>Goles</label>
+                    <input type="number" name="resultado_equipo_b_goles" value="{{ datos.resultado_equipo_b_goles if datos else '' }}">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- DIRECTOR Y ÁRBITROS -->
+        <fieldset>
+            <legend>Director de turno y árbitros</legend>
+
+            <div class="grid-2">
+                <div>
+                    <label>Director de turno</label>
+                    <input type="text" name="director_turno" value="{{ datos.director_turno if datos else '' }}">
+                </div>
+                <div>
+                    <label>Árbitro</label>
+                    <input type="text" name="arbitro" value="{{ datos.arbitro if datos else '' }}">
+                </div>
+            </div>
+
+            <div class="grid-3" style="margin-top:10px;">
+                <div>
+                    <label>Asistente 1</label>
+                    <input type="text" name="asistente_1" value="{{ datos.asistente_1 if datos else '' }}">
+                </div>
+                <div>
+                    <label>Asistente 2</label>
+                    <input type="text" name="asistente_2" value="{{ datos.asistente_2 if datos else '' }}">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- EVENTOS DEL PARTIDO -->
+        <fieldset>
+            <legend>Eventos del partido</legend>
+
+            <div class="grid-2">
+                <div>
+                    <div class="section-title">Equipo A</div>
+
+                    <label>Nombre equipo</label>
+                    <input type="text" name="equipo_a_eventos_nombre" value="{{ datos.equipo_a_eventos_nombre if datos else '' }}">
+
+                    <label>Cambios - ENTRAN</label>
+                    <textarea name="equipo_a_cambios_entran" rows="3">{{ datos.equipo_a_cambios_entran if datos else '' }}</textarea>
+
+                    <label>Cambios - SALEN</label>
+                    <textarea name="equipo_a_cambios_salen" rows="3">{{ datos.equipo_a_cambios_salen if datos else '' }}</textarea>
+
+                    <label>Tarjetas amarillas</label>
+                    <textarea name="equipo_a_tarjetas_amarillas" rows="3">{{ datos.equipo_a_tarjetas_amarillas if datos else '' }}</textarea>
+
+                    <label>Expulsados</label>
+                    <textarea name="equipo_a_expulsados" rows="3">{{ datos.equipo_a_expulsados if datos else '' }}</textarea>
+                </div>
+
+                <div>
+                    <div class="section-title">Equipo B</div>
+
+                    <label>Nombre equipo</label>
+                    <input type="text" name="equipo_b_eventos_nombre" value="{{ datos.equipo_b_eventos_nombre if datos else '' }}">
+
+                    <label>Cambios - ENTRAN</label>
+                    <textarea name="equipo_b_cambios_entran" rows="3">{{ datos.equipo_b_cambios_entran if datos else '' }}</textarea>
+
+                    <label>Cambios - SALEN</label>
+                    <textarea name="equipo_b_cambios_salen" rows="3">{{ datos.equipo_b_cambios_salen if datos else '' }}</textarea>
+
+                    <label>Tarjetas amarillas</label>
+                    <textarea name="equipo_b_tarjetas_amarillas" rows="3">{{ datos.equipo_b_tarjetas_amarillas if datos else '' }}</textarea>
+
+                    <label>Expulsados</label>
+                    <textarea name="equipo_b_expulsados" rows="3">{{ datos.equipo_b_expulsados if datos else '' }}</textarea>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- OBSERVACIONES Y FIRMAS -->
+        <fieldset>
+            <legend>Observaciones y firmas</legend>
+
+            <label>Observaciones</label>
+            <textarea name="observaciones" rows="4">{{ datos.observaciones if datos else '' }}</textarea>
+
+            <div class="grid-2" style="margin-top:10px;">
+                <!-- Director de turno -->
+                <div class="signature-block">
+                    <label>Firma director de turno (nombre)</label>
+                    <input type="text" name="firma_director_turno" value="{{ datos.firma_director_turno if datos else '' }}">
+
+                    <div class="signature-pad">
+                        <canvas id="sig_director"></canvas>
+                        <div class="signature-actions">
+                            <button type="button" onclick="clearSignature('sig_director')">Borrar firma</button>
+                        </div>
+                    </div>
+
+                    <input type="hidden"
+                           id="sig_director_input"
+                           name="firma_director_turno_img"
+                           value="{{ datos.firma_director_turno_img if datos else '' }}">
+                </div>
+
+                <!-- Árbitro -->
+                <div class="signature-block">
+                    <label>Firma árbitro (nombre)</label>
+                    <input type="text" name="firma_arbitro" value="{{ datos.firma_arbitro if datos else '' }}">
+
+                    <div class="signature-pad">
+                        <canvas id="sig_arbitro"></canvas>
+                        <div class="signature-actions">
+                            <button type="button" onclick="clearSignature('sig_arbitro')">Borrar firma</button>
+                        </div>
+                    </div>
+
+                    <input type="hidden"
+                           id="sig_arbitro_input"
+                           name="firma_arbitro_img"
+                           value="{{ datos.firma_arbitro_img if datos else '' }}">
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-top:10px;">
+                <!-- Asistente 1 -->
+                <div class="signature-block">
+                    <label>Firma asistente 1 (nombre)</label>
+                    <input type="text" name="firma_asistente_1" value="{{ datos.firma_asistente_1 if datos else '' }}">
+
+                    <div class="signature-pad">
+                        <canvas id="sig_as1"></canvas>
+                        <div class="signature-actions">
+                            <button type="button" onclick="clearSignature('sig_as1')">Borrar firma</button>
+                        </div>
+                    </div>
+
+                    <input type="hidden"
+                           id="sig_as1_input"
+                           name="firma_asistente_1_img"
+                           value="{{ datos.firma_asistente_1_img if datos else '' }}">
+                </div>
+
+                <!-- Asistente 2 -->
+                <div class="signature-block">
+                    <label>Firma asistente 2 (nombre)</label>
+                    <input type="text" name="firma_asistente_2" value="{{ datos.firma_asistente_2 if datos else '' }}">
+
+                    <div class="signature-pad">
+                        <canvas id="sig_as2"></canvas>
+                        <div class="signature-actions">
+                            <button type="button" onclick="clearSignature('sig_as2')">Borrar firma</button>
+                        </div>
+                    </div>
+
+                    <input type="hidden"
+                           id="sig_as2_input"
+                           name="firma_asistente_2_img"
+                           value="{{ datos.firma_asistente_2_img if datos else '' }}">
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="buttons">
+            <button type="submit" class="btn-primary">
+                Guardar planilla
+            </button>
+
+            <button type="submit"
+                    class="btn-secondary"
+                    formaction="{{ url_for('descargar') }}">
+                {% if license_active %}
+                    Descargar planilla en PDF
+                {% else %}
+                    Activar licencia para descargar PDF
+                {% endif %}
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<script>
+function preparePlayersData() {
+    const groups = [
+        "equipo_a_jugadores",
+        "equipo_a_suplentes",
+        "equipo_b_jugadores",
+        "equipo_b_suplentes"
+    ];
+
+    groups.forEach(function(group) {
+        const rows = document.querySelectorAll('tr[data-group="' + group + '"]');
+        const lines = [];
+
+        rows.forEach(function(row) {
+            const numInput = row.querySelector('.jug-num');
+            const nameInput = row.querySelector('.jug-nombre');
+            if (!numInput || !nameInput) return;
+
+            const num = numInput.value.trim();
+            const name = nameInput.value.trim();
+
+            if (num || name) {
+                if (num && name) {
+                    lines.push(num + " - " + name);
+                } else if (name) {
+                    lines.push(name);
+                } else {
+                    lines.push(num);
+                }
+            }
+        });
+
+        const hidden = document.getElementById(group + "_hidden");
+        if (hidden) {
+            hidden.value = lines.join("\n");
+        }
+    });
+}
+
+function initSignaturePad(canvasId, inputId) {
+    const canvas = document.getElementById(canvasId);
+    const hidden = document.getElementById(inputId);
+    if (!canvas || !canvas.getContext) return;
+
+    const ctx = canvas.getContext("2d");
+
+    function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const ratio = window.devicePixelRatio || 1;
+
+        canvas.width = rect.width * ratio;
+        canvas.height = 80 * ratio;
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(ratio, ratio);
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.strokeStyle = "#000";
+
+        if (hidden && hidden.value) {
+            const img = new Image();
+            img.onload = function () {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, rect.width, 80);
+            };
+            img.src = hidden.value;
+        }
+    }
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    let drawing = false;
+
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches ? e.touches[0] : e;
+        return {
+            x: touch.clientX - rect.left,
+            y: touch.clientY - rect.top
+        };
+    }
+
+    function start(e) {
+        drawing = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        e.preventDefault();
+    }
+
+    function move(e) {
+        if (!drawing) return;
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        e.preventDefault();
+    }
+
+    function end(e) {
+        if (!drawing) return;
+        drawing = false;
+        if (hidden) {
+            hidden.value = canvas.toDataURL("image/png");
+        }
+        e && e.preventDefault();
+    }
+
+    canvas.addEventListener("mousedown", start);
+    canvas.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", end);
+
+    canvas.addEventListener("touchstart", start, { passive: false });
+    canvas.addEventListener("touchmove", move, { passive: false });
+    canvas.addEventListener("touchend", end);
+}
+
+function clearSignature(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    const hidden = document.getElementById(canvasId + "_input");
+    if (!canvas || !canvas.getContext) return;
+
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (hidden) {
+        hidden.value = "";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    const groups = [
+        "equipo_a_jugadores",
+        "equipo_a_suplentes",
+        "equipo_b_jugadores",
+        "equipo_b_suplentes"
+    ];
+
+    groups.forEach(function(group) {
+        const hidden = document.getElementById(group + "_hidden");
+        if (!hidden) return;
+
+        const value = hidden.value || "";
+        if (!value) return;
+
+        const lines = value.split(/\r?\n/);
+        const rows = document.querySelectorAll('tr[data-group="' + group + '"]');
+
+        lines.forEach(function(line, idx) {
+            if (idx >= rows.length) return;
+
+            line = line.trim();
+            if (!line) return;
+
+            let num = "";
+            let name = "";
+            const parts = line.split("-");
+
+            if (parts.length > 1) {
+                num = parts[0].trim();
+                name = parts.slice(1).join("-").trim();
+            } else {
+                name = line;
+            }
+
+            const row = rows[idx];
+            const numInput = row.querySelector('.jug-num');
+            const nameInput = row.querySelector('.jug-nombre');
+
+            if (numInput) numInput.value = num;
+            if (nameInput) nameInput.value = name;
+        });
+    });
+
+    initSignaturePad("sig_director", "sig_director_input");
+    initSignaturePad("sig_arbitro", "sig_arbitro_input");
+    initSignaturePad("sig_as1", "sig_as1_input");
+    initSignaturePad("sig_as2", "sig_as2_input");
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Activar licencia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+<div class="container">
+
+    <div class="top-bar">
+        <div>
+            <a href="{{ url_for('planillas') }}">&larr; Volver a planillas</a>
+        </div>
+        <div>
+            {{ license_status }}
+        </div>
+    </div>
+
+    <div class="header">
+        <div class="header-logo">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+        </div>
+        <div class="header-title">
+            <h1>ACTIVAR LICENCIA</h1>
+            <p class="subtitulo">
+                Ingresa tu código para habilitar la descarga de planillas en PDF.
+            </p>
+        </div>
+    </div>
+
+    {% if error %}
+        <div class="mensaje-error">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    {% if mensaje %}
+        <div class="mensaje">
+            {{ mensaje }}
+        </div>
+    {% endif %}
+
+    <form method="POST">
+        <fieldset>
+            <legend>Código de activación</legend>
+
+            <label for="codigo">Código</label>
+            <input type="text"
+                   id="codigo"
+                   name="codigo"
+                   placeholder="Ej: PLAN24-TEST-001"
+                   required>
+
+            <p class="hint">
+                Los códigos pueden habilitar descargas por 24 horas, 1 mes o acceso admin ilimitado.
+            </p>
+
+            <div class="buttons">
+                <button type="submit" class="btn-primary">
+                    Activar licencia
+                </button>
+            </div>
+        </fieldset>
+    </form>
+
+</div>
+</body>
+</html>

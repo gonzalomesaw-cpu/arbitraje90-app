@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Planillas disponibles</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body class="home">
+<div class="home-shell">
+
+    <header class="home-header">
+        <div class="home-brand">
+            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Logo">
+            <span>Arbitraje 90+</span>
+        </div>
+
+        <nav class="home-nav">
+            <a href="{{ url_for('inicio') }}">Inicio</a>
+            <a href="{{ url_for('planillas') }}">Planillas</a>
+            <a href="#">Servicio arbitral</a>
+            <a href="{{ url_for('contacto') }}">Contacto</a>
+        </nav>
+    </header>
+
+    <main class="home-main">
+        <div class="home-main-inner">
+
+            <section class="templates-hero">
+                <h1>Planillas disponibles</h1>
+                <p>
+                    Selecciona el formato de planilla que necesitas completar.
+                    Puedes llenar la planilla gratis y la descarga en PDF será habilitada mediante código de activación.
+                </p>
+            </section>
+
+            <section class="templates-grid">
+                <article class="template-card">
+                    <div class="template-tag">Disponible</div>
+                    <h2>Planilla Copa Escolar UC</h2>
+                    <p>
+                        Formato general de planilla usada para liga escolar UC.
+                    </p>
+
+                    <div class="template-meta">
+                        <span>PDF descargable</span>
+                    </div>
+
+                    <a href="{{ url_for('planilla') }}" class="btn-primary">
+                        Abrir planilla
+                    </a>
+                </article>
+
+                <article class="template-card template-card-disabled">
+                    <div class="template-tag">Próximamente</div>
+                    <h2>Planilla disciplinaria</h2>
+                    <p>
+                        Formato específico para informes disciplinarios, expulsiones,
+                        incidentes y observaciones ampliadas.
+                    </p>
+
+                    <button type="button" class="btn-secondary" disabled>
+                        Próximamente
+                    </button>
+                </article>
+
+                <article class="template-card template-card-disabled">
+                    <div class="template-tag">Próximamente</div>
+                    <h2>Planilla de torneo</h2>
+                    <p>
+                        Formato pensado para campeonatos con múltiples partidos,
+                        control de jornadas y reportes por fecha.
+                    </p>
+
+                    <button type="button" class="btn-secondary" disabled>
+                        Próximamente
+                    </button>
+                </article>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="home-footer">
+        Plataforma de arbitraje · Planillas digitales para partidos y campeonatos
+    </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inicio - Plataforma de Arbitraje</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body class="home">
+<div class="home-shell">
+
+    <!-- BARRA SUPERIOR -->
+    <header class="home-header">
+        <div class="home-brand">
+            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Logo">
+            <span></span>
+        </div>
+
+        <nav class="home-nav">
+            <a href="#">Inicio</a>
+            <a href="#">Nosotros</a>
+            <a href="#">Servicio arbitral</a>
+            <a href="{{ url_for('contacto') }}">Contacto</a>
+        </nav>
+
+         <!--<div class="home-user">
+            <span>{{ session.username }}</span>
+            <a href="{{ url_for('logout') }}">Salir</a>
+        </div>-->
+    </header>
+
+    <!-- HERO PRINCIPAL -->
+    <section class="home-hero">
+        <div class="home-hero-inner">
+            <div>
+                <div class="home-hero-title">
+                   Arbitraje 90+
+                </div>
+                <p class="home-hero-subtitle">
+                    Administra tus planillas de partido desde cualquier dispositivo.
+                    Guarda, descarga en PDF y organiza tus campeonatos en un solo lugar.
+                </p>
+
+                <!--<div class="home-hero-badges">
+                    <span class="badge">Fútbol 11</span>
+                    <span class="badge">Fútbol 7</span>
+                    <span class="badge">Fútbol 5</span>
+                </div>-->
+
+                <div class="home-hero-actions">
+                    <!-- Este sí navega a /planilla -->
+                    <a href="{{ url_for('planillas') }}" class="btn-primary">
+                        Ir a planillas
+                    </a>
+                
+                    <!-- Este sigue siendo solo decorativo por ahora
+                    <button type="button" class="btn-secondary btn-ghost-yellow">
+                        Campeonatos
+                    </button>  -->
+                </div>                
+            </div>
+
+            <div class="home-hero-card">
+                <div class="home-hero-card-title">Próximamente</div>
+                <p class="home-hero-card-text">
+                    Panel de ligas, reportes automáticos, gestión de equipos de árbitros
+                    y estadísticas en tiempo real.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="home-main">
+        <div class="home-main-inner">
+            <!-- STATS -->
+            <section class="home-stats">
+                <div class="stat-card">
+                    <div class="stat-label">árbitros</div>
+                    <p class="home-hero-card-text">
+                        Equipo de árbitros de Fútbol 11,7 y 5 para diferentes categorias.
+                    </p>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Planillas</div>
+                    <p class="home-hero-card-text">
+                        Historial de planillas y reportes listos para compartir con la organización.
+                        <br>Puedes enviarnos tus planillas en papel y las digitalizamos para un acceso más fácil y compartirlas con quien quieras.
+                    </p>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">campeonatos</div>
+                    <p class="home-hero-card-text">
+                        Conoce en que campeonatos trabajamos y guardamos sus datos de manera digital y más organizada.
+                    </p>
+                </div>
+            </section>
+
+            <!-- SECCIÓN TIPO "LA EMPRESA" -->
+            <section class="home-about">
+                <div class="home-about-text">
+                    <h2>La empresa</h2>
+                    <p>
+                        Tu plataforma de apoyo para el trabajo arbitral: planillas claras,
+                        firmadas digitalmente y listas para enviar en segundos.
+                    </p>
+                    <p>
+                        Este panel de inicio será el punto central para acceder a tus planillas,
+                        según tu plan, manteniendo todo tu trabajo organizado.
+                    </p>
+                </div>
+
+                <div class="home-about-card">
+                    <strong>¿Qué podrás hacer desde aquí?</strong>
+                    <p>
+                        • Crear y administrar planillas de partidos<br>
+                        • Descargar informes en PDF<br>
+                        • Configurar diferentes formatos de planilla<br>
+                        • Invitar a otros árbitros a usar la plataforma
+                    </p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="home-footer">
+        Plataforma de arbitraje · Hecha para árbitros que viven el 100% del partido
+    </footer>
+
+</div>
+</body>
+</html>

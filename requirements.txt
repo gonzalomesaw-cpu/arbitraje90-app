@@ -1,0 +1,6 @@
+Flask
+reportlab
+gunicorn
+Pillow
+pytesseract
+Werkzeug
